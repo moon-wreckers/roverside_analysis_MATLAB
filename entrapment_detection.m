@@ -1,12 +1,17 @@
 %% Entrapment Detection
 
-%D = dlmread('ak2_vive_driving_normal_highbay_20171206.csv', ',');
-D = dlmread('ak2_vive_driving_highcentered_highbay_20171206.csv', ',');
-%D = dlmread('ak2_vive_driving_stuck_jiggling_highbay_20171206.csv', ',');
+D1 = dlmread('ak2_vive_driving_normal_highbay_20171206.csv', ',');
+D2 = dlmread('ak2_vive_driving_highcentered_highbay_20171206.csv', ',');
+D3 = dlmread('ak2_vive_driving_stuck_jiggling_highbay_20171206.csv', ',');
 
-%D = D(1:10,:);
+t1 = D1(:,1) - D1(1,1);
+%t2 = D2(:,1) - D2(1,1);
+t2 = D3(:,1) - D3(1,1);
+t2 = t2 + t1(size(t1,1),1);
+t = [t1;t2];
 
-t = D(:,1) - D(1,1);
+D = [D1;D3];
+
 v_wheel = D(:,2:4);
 v_vive = D(:,5:7);
 
@@ -36,6 +41,17 @@ for i_t = 1:size(t,1)
     priors_update = priors(i_t,:);
     x = abs(norm(v_vive(i_t,:)) - norm(v_wheel(i_t,:)));
     v_err(i_t) = x;
+    
+    wsize = 2;
+    if i_t > wsize
+        acc_x = 0;
+        for i_err = (i_t - wsize + 1):i_t
+            acc_x = acc_x + v_err(i_err);
+        end
+        v_err(i_t) = acc_x / wsize;
+    end
+    x = v_err(i_t);
+    
     for i_prior = 1:size(priors,2)
         priors_update(1,i_prior) = normpdf(x, mu(1,i_prior), sigma(1,i_prior)) * priors(i_t,i_prior);
     end
