@@ -7,7 +7,9 @@ D2 = dlmread('entrapment_data_normal_rocky.csv', ',');
 D3 = dlmread('ak1_vive_stopped_highbay_20171130_vive.csv', ',');
 D3 = horzcat(zeros(size(D3,1), 2), sqrt(D3(:,5).*D3(:,5) + D3(:,6).*D3(:,6)), D3(:,7), zeros(size(D3,1),1));
 
-D = vertcat(D1, D2);
+D12 = vertcat(D1, D2);
+
+D = D12(find(D12(:,3) > 0.025), :);
 %D = D3;
 
 X = D(:,1:2); % linear velocity magnitude, angular velocity magnitude
@@ -19,12 +21,11 @@ L = Y(:,1);   % measurement matrices
 %% Semi-Gaussian Model Fitting
 
 gauss_mu = mean(L);
-gauss_sigma = (L - gauss_mu)' * (L - gauss_mu) / size(L,1);
-gauss_sigma = gauss_sigma * 2;
-%gauss_sigma = gauss_sigma * 200;
+gauss_sigma2 = (L - gauss_mu)' * (L - gauss_mu) / size(L,1);
+%gauss_sigma2 = gauss_sigma2 * 2;
 
 fprintf('Gaussian_mu = %f\n', gauss_mu);
-fprintf('Gaussian_sigma = %f\n', gauss_sigma);
+fprintf('Gaussian_sigma2 = %f\n', gauss_sigma2);
 
 
 %% Plot
@@ -39,7 +40,7 @@ plot(1:size(L,1), L);
 axis([1, size(L,1), lowerbound, upperbound])
 
 subplot(1,2,2);
-plot(normpdf(lowerbound:0.0001:upperbound, gauss_mu, gauss_sigma), lowerbound:0.0001:upperbound);
+plot(normpdf(lowerbound:0.0001:upperbound, gauss_mu, sqrt(gauss_sigma2)), lowerbound:0.0001:upperbound);
 hold on;
 scatter(zeros(size(L,1),1) + 0.01, L, '.');
 hold off;
